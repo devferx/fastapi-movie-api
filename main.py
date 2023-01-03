@@ -65,9 +65,18 @@ def message():
     return HTMLResponse("<h1>Hello world!</h1>")
 
 
-@app.post("/login", tags=["auth"])
+@app.post("/login", tags=["auth"], status_code=200)
 def login(user: User = Body(...)) -> dict:
-    return user
+    if user.email == "admin@gmail.com" and user.password == "admin":
+        token: str = create_token(user.dict())
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Login successful",
+                "token": token,
+            },
+        )
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
 
 @app.get("/movies", tags=["movies"], response_model=List[Movie], status_code=200)
