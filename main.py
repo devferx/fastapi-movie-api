@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from fastapi import FastAPI, Path, Body, Query
+from fastapi import FastAPI, Path, Body, Query, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from pydantic import BaseModel
@@ -58,9 +58,9 @@ def message():
     return HTMLResponse("<h1>Hello world!</h1>")
 
 
-@app.get("/movies", tags=["movies"], response_model=List[Movie])
+@app.get("/movies", tags=["movies"], response_model=List[Movie], status_code=200)
 def get_movies() -> List[Movie]:
-    return JSONResponse(content=movies)
+    return JSONResponse(status_code=200, content=movies)
 
 
 @app.get("/movies/{id}", tags=["movies"], response_model=Movie)
@@ -69,7 +69,7 @@ def get_movie(id: int = Path(ge=1, le=2000)) -> Movie:
     return JSONResponse(content=retrieved_movies[0])
 
 
-@app.get("/movies/", tags=["movies"], response_model=List[Movie])
+@app.get("/movies/", tags=["movies"], response_model=List[Movie], status_code=200)
 def get_movies_by_category(
     category: str = Query(min_length=5, max_length=15),
     year: int = Query(ge=1900, le=2021),
@@ -80,21 +80,26 @@ def get_movies_by_category(
             movies,
         )
     )
-    return JSONResponse(content=retrieved_movies)
+
+    if len(retrieved_movies) == 0:
+        raise HTTPException(status_code=404, detail="Movie not found")
+
+    return JSONResponse(status_code=200, content=retrieved_movies)
 
 
-@app.post("/movies", tags=["movies"], response_model=dict)
+@app.post("/movies", tags=["movies"], response_model=dict, status_code=201)
 def add_movie(movie: Movie) -> dict:
     movies.append(movie)
     return JSONResponse(
+        status_code=201,
         content={
             "message": "Movie added successfully!",
             "movie": movies[-1],
-        }
+        },
     )
 
 
-@app.put("/movies/{id}", tags=["movies"], response_model=dict)
+@app.put("/movies/{id}", tags=["movies"], response_model=dict, status_code=200)
 def update_movie(
     id: int = Path(ge=0, le=2000),
     updated_movie: Movie = Body(...),
@@ -108,20 +113,22 @@ def update_movie(
     )
 
     return JSONResponse(
+        status_code=200,
         content={
             "message": "Movie updated successfully!",
             "movie": updated_movie,
-        }
+        },
     )
 
 
-@app.delete("/movies/{id}", tags=["movies"], response_model=dict)
+@app.delete("/movies/{id}", tags=["movies"], response_model=dict, status_code=200)
 def delete_movie(id: int = Path(ge=0, le=2000)) -> dict:
     global movies
     movies = list(filter(lambda movie: movie["id"] != id, movies))
     return JSONResponse(
+        status_code=200,
         content={
             "message": "Movie deleted successfully!",
             "id": id,
-        }
+        },
     )
