@@ -1,9 +1,7 @@
 from typing import Optional
 
-from fastapi import FastAPI, Path, Query
+from fastapi import FastAPI, Path, Body, Query
 from fastapi.responses import HTMLResponse
-
-# from fastapi import Body
 
 from pydantic import BaseModel
 from pydantic import Field
@@ -90,7 +88,7 @@ def add_movie(movie: Movie):
 
 
 @app.put("/movies/{id}", tags=["movies"])
-def update_movie(id: int, updated_movie: Movie):
+def update_movie(id: int = Path(ge=0, le=2000), updated_movie: Movie = Body(...)):
     global movies
     movies = list(
         map(
@@ -103,7 +101,7 @@ def update_movie(id: int, updated_movie: Movie):
 
 
 @app.delete("/movies/{id}", tags=["movies"])
-def delete_movie(id: int):
+def delete_movie(id: int = Path(ge=0, le=2000)):
     global movies
     movies = list(filter(lambda movie: movie["id"] != id, movies))
     return {"message": "Movie deleted successfully!"}
