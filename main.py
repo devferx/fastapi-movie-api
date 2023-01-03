@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Path, Query
 from fastapi.responses import HTMLResponse
 
 # from fastapi import Body
@@ -66,12 +66,15 @@ def get_movies():
 
 
 @app.get("/movies/{id}", tags=["movies"])
-def get_movie(id: int):
+def get_movie(id: int = Path(ge=1, le=2000)):
     return list(filter(lambda movie: movie["id"] == id, movies))
 
 
 @app.get("/movies/", tags=["movies"])
-def get_movies_by_category(category: str, year: int):
+def get_movies_by_category(
+    category: str = Query(min_length=5, max_length=15),
+    year: int = Query(ge=1900, le=2021),
+):
     return list(
         filter(
             lambda movie: movie["category"] == category and movie["year"] == year,
