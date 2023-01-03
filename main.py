@@ -6,10 +6,17 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from pydantic import Field
 
+from jwt_manger import create_token
+
 
 app = FastAPI()
 app.title = "Movie API"
 app.version = "0.0.1"
+
+
+class User(BaseModel):
+    email: str
+    password: str
 
 
 class Movie(BaseModel):
@@ -56,6 +63,11 @@ movies = [
 @app.get("/", tags=["home"])
 def message():
     return HTMLResponse("<h1>Hello world!</h1>")
+
+
+@app.post("/login", tags=["auth"])
+def login(user: User = Body(...)) -> dict:
+    return user
 
 
 @app.get("/movies", tags=["movies"], response_model=List[Movie], status_code=200)
