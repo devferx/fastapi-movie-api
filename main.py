@@ -70,3 +70,36 @@ def add_movie(
         }
     )
     return movies[-1]
+
+
+@app.put("/movies/{id}", tags=["movies"])
+def update_movie(
+    id: int = Body(),
+    title: str = Body(),
+    overview: str = Body(),
+    year: int = Body(),
+    rating: float = Body(),
+    category: str = Body(),
+):
+    updated_movie = {
+        "id": id,
+        "title": title,
+        "overview": overview,
+        "year": year,
+        "rating": rating,
+        "category": category,
+    }
+    movies = list(
+        map(
+            lambda movie: movie if movie["id"] != id else updated_movie,
+            movies,
+        )
+    )
+
+    return updated_movie
+
+
+@app.delete("/movies/{id}", tags=["movies"])
+def delete_movie(id: int):
+    movies = list(filter(lambda movie: movie["id"] != id, movies))
+    return {"message": "Movie deleted successfully!"}
