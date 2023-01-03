@@ -1,9 +1,21 @@
 from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+from typing import Optional
 
 app = FastAPI()
 app.title = "Movie API"
 app.version = "0.0.1"
+
+
+class Movie(BaseModel):
+    id: int
+    title: str
+    overview: Optional[str] = None
+    year: int
+    rating: float
+    category: str
+
 
 movies = [
     {
@@ -51,44 +63,14 @@ def get_movies_by_category(category: str, year: int):
 
 
 @app.post("/movies", tags=["movies"])
-def add_movie(
-    id: int = Body(),
-    title: str = Body(),
-    overview: str = Body(),
-    year: int = Body(),
-    rating: float = Body(),
-    category: str = Body(),
-):
-    movies.append(
-        {
-            "id": id,
-            "title": title,
-            "overview": overview,
-            "year": year,
-            "rating": rating,
-            "category": category,
-        }
-    )
+def add_movie(movie: Movie):
+    movies.append(movie)
     return movies[-1]
 
 
 @app.put("/movies/{id}", tags=["movies"])
-def update_movie(
-    id: int = Body(),
-    title: str = Body(),
-    overview: str = Body(),
-    year: int = Body(),
-    rating: float = Body(),
-    category: str = Body(),
-):
-    updated_movie = {
-        "id": id,
-        "title": title,
-        "overview": overview,
-        "year": year,
-        "rating": rating,
-        "category": category,
-    }
+def update_movie(id: int, updated_movie: Movie):
+    global movies
     movies = list(
         map(
             lambda movie: movie if movie["id"] != id else updated_movie,
