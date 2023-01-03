@@ -1,7 +1,7 @@
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import FastAPI, Path, Body, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from pydantic import BaseModel
 from pydantic import Field
@@ -58,37 +58,47 @@ def message():
     return HTMLResponse("<h1>Hello world!</h1>")
 
 
-@app.get("/movies", tags=["movies"])
-def get_movies():
-    return movies
+@app.get("/movies", tags=["movies"], response_model=List[Movie])
+def get_movies() -> List[Movie]:
+    return JSONResponse(content=movies)
 
 
-@app.get("/movies/{id}", tags=["movies"])
-def get_movie(id: int = Path(ge=1, le=2000)):
-    return list(filter(lambda movie: movie["id"] == id, movies))
+@app.get("/movies/{id}", tags=["movies"], response_model=Movie)
+def get_movie(id: int = Path(ge=1, le=2000)) -> Movie:
+    retrieved_movies = list(filter(lambda movie: movie["id"] == id, movies))
+    return JSONResponse(content=retrieved_movies[0])
 
 
-@app.get("/movies/", tags=["movies"])
+@app.get("/movies/", tags=["movies"], response_model=List[Movie])
 def get_movies_by_category(
     category: str = Query(min_length=5, max_length=15),
     year: int = Query(ge=1900, le=2021),
-):
-    return list(
+) -> List[Movie]:
+    retrieved_movies = list(
         filter(
             lambda movie: movie["category"] == category and movie["year"] == year,
             movies,
         )
     )
+    return JSONResponse(content=retrieved_movies)
 
 
-@app.post("/movies", tags=["movies"])
-def add_movie(movie: Movie):
+@app.post("/movies", tags=["movies"], response_model=dict)
+def add_movie(movie: Movie) -> dict:
     movies.append(movie)
-    return movies[-1]
+    return JSONResponse(
+        content={
+            "message": "Movie added successfully!",
+            "movie": movies[-1],
+        }
+    )
 
 
-@app.put("/movies/{id}", tags=["movies"])
-def update_movie(id: int = Path(ge=0, le=2000), updated_movie: Movie = Body(...)):
+@app.put("/movies/{id}", tags=["movies"], response_model=dict)
+def update_movie(
+    id: int = Path(ge=0, le=2000),
+    updated_movie: Movie = Body(...),
+) -> dict:
     global movies
     movies = list(
         map(
@@ -97,11 +107,21 @@ def update_movie(id: int = Path(ge=0, le=2000), updated_movie: Movie = Body(...)
         )
     )
 
-    return updated_movie
+    return JSONResponse(
+        content={
+            "message": "Movie updated successfully!",
+            "movie": updated_movie,
+        }
+    )
 
 
-@app.delete("/movies/{id}", tags=["movies"])
-def delete_movie(id: int = Path(ge=0, le=2000)):
+@app.delete("/movies/{id}", tags=["movies"], response_model=dict)
+def delete_movie(id: int = Path(ge=0, le=2000)) -> dict:
     global movies
     movies = list(filter(lambda movie: movie["id"] != id, movies))
-    return {"message": "Movie deleted successfully!"}
+    return JSONResponse(
+        content={
+            "message": "Movie deleted successfully!",
+            "id": id,
+        }
+    )
