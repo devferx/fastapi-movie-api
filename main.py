@@ -1,7 +1,13 @@
-from fastapi import FastAPI, Body
-from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
 from typing import Optional
+
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+
+# from fastapi import Body
+
+from pydantic import BaseModel
+from pydantic import Field
+
 
 app = FastAPI()
 app.title = "Movie API"
@@ -10,11 +16,23 @@ app.version = "0.0.1"
 
 class Movie(BaseModel):
     id: int
-    title: str
-    overview: Optional[str] = None
-    year: int
-    rating: float
-    category: str
+    title: str = Field(min_length=5, max_length=15)
+    overview: Optional[str] = Field(min_length=15, max_length=50)
+    year: int = Field(ge=1900, le=2021)
+    rating: float = Field(ge=0.0, le=10.0)
+    category: str = Field(min_length=3, max_length=15)
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 1,
+                "title": "Avatar",
+                "oveview": "Cillum exercitation ad irure quis aliquip cillum eu. Do dolore exercitation anim officia et tempor deserunt ut laborum sit magna. Elit officia sit sunt cupidatat aute laborum consequat do occaecat reprehenderit ad quis exercitation ex. Officia velit duis reprehenderit velit minim labore amet minim aliquip mollit nisi dolor ipsum.",
+                "year": 2009,
+                "rating": 7.8,
+                "category": "Action",
+            },
+        }
 
 
 movies = [
@@ -83,5 +101,6 @@ def update_movie(id: int, updated_movie: Movie):
 
 @app.delete("/movies/{id}", tags=["movies"])
 def delete_movie(id: int):
+    global movies
     movies = list(filter(lambda movie: movie["id"] != id, movies))
     return {"message": "Movie deleted successfully!"}
